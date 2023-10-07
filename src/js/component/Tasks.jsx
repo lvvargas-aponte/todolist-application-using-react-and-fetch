@@ -3,7 +3,7 @@ import 'bootstrap';
 
 const Tasks = (props) => {
 
-    const { todos } = props;
+    const { todos, deleteTodo } = props;
 
 
     return (
@@ -11,7 +11,7 @@ const Tasks = (props) => {
             <div className="lines"></div>
             <ul className="todosBody">
                 {todos.map((todo, index) => {
-                    return <li key={index} className="todos"> {todo.label} </li>
+                    return <li key={index} className="todos"> {todo} <span className="delete-icon float-end" onClick={() => deleteTodo(index)}>&#x2716;</span> </li>
                 })}
             </ul>
         </>

@@ -11,39 +11,57 @@ const TodoList = () => {
 
 	const [inputValue, setInputValue] = useState('');
 	const [todos, setTodos] = useState([]);
-	const [fetchedTodos, setFetchedTodos] = useState([]);
+	const [id, setId] = useState([]);
+	const [fetchTodos, setFetchedTodos] = useState([]);
+	const url = 'https://playground.4geeks.com/apis/fake/todos/user/lvvargas-aponte';
 
+	const getTodos = () => {
+		return fetch(url)
+			.then(resp => {
+				if (!resp.ok) {
+					throw new Error("Network response was not ok");
+				}
+				return resp.json();
+			})
+			.catch(error => {
+				console.error(`There was a problem with the fetch operation: ${error}`);
+			});
+	}
 
+	useEffect(() => {
+		getTodos()
+			.then(data => {
+				setFetchedTodos(data);
+				const todosList = data.map(todo => todo.label);
+				const idList = data.map(todo => todo.id);
+				setTodos(todosList);
+				setId(idList);
+			});
+	}, [fetchTodos]);
 
 	const handleInputChange = (value) => {
 		setInputValue(value);
-	};
-
-	const handleInputKeyPress = (e) => {
-		if (e.key === "Enter" && inputValue.trim() != "") {
-			const newTodo = inputValue;
-
-			setTodos((prevTodos) => [...prevTodos, newTodo]);
-
-			setInputValue('');
-		}
 	};
 
 	const deleteTodo = (index) => {
 		setTodos((prevTodos) =>
 			prevTodos.filter((_, todoIndex) => todoIndex != index)
 		)
+		setFetchedTodos((prevFetchTodos) => {
+			const removedFetchTodos = prevFetchTodos.filter((_, fetchTodoIndex) => fetchTodoIndex != index)
+			deleteTodos(removedFetchTodos);
+		})
+
 	}
 
-	const updateTodos = () => {
-		const updatedTodos = todos.map(todo => ({
-			label: todo,
-			done: false,
-		}));
+	const getId = () => {
+		return id[id.length - 1] + 1;
+	}
 
-		fetch('https://playground.4geeks.com/apis/fake/todos/user/lvvargas-aponte', {
+	const deleteTodos = (removedFetchTodos) => {
+		fetch(url, {
 			method: "PUT",
-			body: JSON.stringify(updatedTodos),
+			body: JSON.stringify(removedFetchTodos),
 			headers: {
 				"Content-Type": "application/json"
 			}
@@ -52,85 +70,23 @@ const TodoList = () => {
 				if (!resp.ok) {
 					throw new Error("Network response was not ok");
 				}
-				return resp.json();
+				return console.log(resp.json());
 			})
 			.then(data => {
-				console.log(`Updated todos: ${data}`);
-				window.location.reload();
+				console.log(`Updated todos: ${JSON.stringify(data)}`);
 			})
 			.catch(error => {
 				console.error(`There was a problem with the fetch operation: ${error}`);
 			});
-	};
-
-	useEffect(() => {
-		fetch('https://playground.4geeks.com/apis/fake/todos/user/lvvargas-aponte')
-			.then(resp => {
-				if (!resp.ok) {
-					throw new Error("Network response was not ok");
-				}
-				return resp.json();
-			})
-			.then(data => {
-				setFetchedTodos(data);
-			})
-			.catch(error => {
-				console.error(`There was a problem with the fetch operation: ${error}`);
-			});
-	}, []);
-
-	const deleteTodos = () => {
-		fetch('https://playground.4geeks.com/apis/fake/todos/user/lvvargas-aponte', {
-			method: "DELETE",
-			headers: {
-				"Content-Type": "application/json"
-			}
-		})
-			.then(resp => {
-				if (!resp.ok) {
-					throw new Error("Network response was not ok");
-				}
-				return resp.json();
-			})
-			.then(data => {
-				console.log(`Deleted all todos: ${data}`);
-				setFetchedTodos([]);
-			})
-			.catch(error => {
-				console.error(`There was a problem with the fetch operation: ${error}`);
-			})
-		fetch('https://playground.4geeks.com/apis/fake/todos/user/lvvargas-aponte', {
-			method: "POST",
-			body: JSON.stringify([]),
-			headers: {
-				"Content-Type": "application/json"
-			}
-		})
-			.then(resp => {
-				if (!resp.ok) {
-					throw new Error("Network response was not ok");
-				}
-				window.location.reload();
-				return resp.json();
-			})
-			.catch(error => {
-				console.error(`There was a problem with the fetch operation: ${error}`);
-			})
-	};
-
+	}
 
 	return (
 		<>
 			<h1>{title}</h1>
 			<div className="container">
-				<Input inputValue={inputValue} onInputChange={handleInputChange} onKeyPress={handleInputKeyPress} setTodos={setTodos} />
-				<Tasks todos={fetchedTodos} deleteTodo={deleteTodo} />
-				<Counter count={fetchedTodos.length} />
-				<div className="d-flex justify-content-center">
-					<button className="me-5" onClick={updateTodos}>Update Todos</button>
-					<button onClick={deleteTodos}>Delete Todos</button>
-				</div>
-
+				<Input inputValue={inputValue} url={url} fetchTodos={fetchTodos} onInputChange={handleInputChange} setTodos={setTodos} getId={getId} setFetchTodos={setFetchedTodos} />
+				<Tasks todos={todos} deleteTodo={deleteTodo} />
+				<Counter count={todos.length} />
 			</div>
 		</>
 	);
